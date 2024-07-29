@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const itemNameInput = document.getElementById("item-name");
     const itemQuantityInput = document.getElementById("item-quantity");
     const itemPriceInput = document.getElementById("item-price");
+    const itemImageInput = document.getElementById("item-image");
     const inventoryTableBody = document.querySelector("#inventory-table tbody");
 
     // ローカルストレージから在庫データを取得
@@ -19,6 +20,13 @@ document.addEventListener("DOMContentLoaded", function() {
     // 在庫をテーブルに追加
     function addItemToTable(item) {
         const row = document.createElement("tr");
+
+        const imageCell = document.createElement("td");
+        const image = document.createElement("img");
+        image.src = item.image;
+        image.alt = item.name;
+        imageCell.appendChild(image);
+        row.appendChild(imageCell);
 
         const nameCell = document.createElement("td");
         nameCell.contentEditable = true;
@@ -50,15 +58,15 @@ document.addEventListener("DOMContentLoaded", function() {
         // テーブルセルの編集終了時にデータを保存
         [nameCell, quantityCell, priceCell].forEach(cell => {
             cell.addEventListener("blur", function() {
-                updateItem(item.name, nameCell.textContent, quantityCell.textContent, priceCell.textContent);
+                updateItem(item.name, nameCell.textContent, quantityCell.textContent, priceCell.textContent, item.image);
             });
         });
     }
 
     // 在庫を追加
-    function addItem(name, quantity, price) {
+    function addItem(name, quantity, price, image) {
         const inventory = JSON.parse(localStorage.getItem("inventory")) || [];
-        const item = { name, quantity, price };
+        const item = { name, quantity, price, image };
         inventory.push(item);
         saveInventory(inventory);
         addItemToTable(item);
@@ -72,11 +80,11 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // 在庫を更新
-    function updateItem(originalName, newName, newQuantity, newPrice) {
+    function updateItem(originalName, newName, newQuantity, newPrice, image) {
         let inventory = JSON.parse(localStorage.getItem("inventory")) || [];
         const itemIndex = inventory.findIndex(item => item.name === originalName);
         if (itemIndex !== -1) {
-            inventory[itemIndex] = { name: newName, quantity: newQuantity, price: newPrice };
+            inventory[itemIndex] = { name: newName, quantity: newQuantity, price: newPrice, image: image };
             saveInventory(inventory);
         }
     }
@@ -84,16 +92,26 @@ document.addEventListener("DOMContentLoaded", function() {
     // フォームの送信イベントを処理
     inventoryForm.addEventListener("submit", function(event) {
         event.preventDefault();
+
         const name = itemNameInput.value;
         const quantity = itemQuantityInput.value;
         const price = itemPriceInput.value;
-        addItem(name, quantity, price);
-        itemNameInput.value = "";
-        itemQuantityInput.value = "";
-        itemPriceInput.value = "";
+        const imageFile = itemImageInput.files[0];
+        
+        if (imageFile) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const image = e.target.result;
+                addItem(name, quantity, price, image);
+                itemNameInput.value = "";
+                itemQuantityInput.value = "";
+                itemPriceInput.value = "";
+                itemImageInput.value = "";
+            };
+            reader.readAsDataURL(imageFile);
+        }
     });
 
     // ページ読み込み時に在庫を表示
     loadInventory();
 });
-
