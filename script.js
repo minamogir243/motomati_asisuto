@@ -5,6 +5,12 @@ document.addEventListener("DOMContentLoaded", function() {
     const itemPriceInput = document.getElementById("item-price");
     const itemImageInput = document.getElementById("item-image");
     const inventoryTableBody = document.querySelector("#inventory-table tbody");
+    
+    const salesForm = document.getElementById("sales-form");
+    const saleItemNameInput = document.getElementById("sale-item-name");
+    const saleQuantityInput = document.getElementById("sale-quantity");
+    const salesList = document.getElementById("sales-list");
+    const showSalesButton = document.getElementById("show-sales");
 
     // ローカルストレージから在庫データを取得
     function loadInventory() {
@@ -15,6 +21,16 @@ document.addEventListener("DOMContentLoaded", function() {
     // 在庫データをローカルストレージに保存
     function saveInventory(inventory) {
         localStorage.setItem("inventory", JSON.stringify(inventory));
+    }
+
+    // ローカルストレージから売り上げデータを取得
+    function loadSales() {
+        return JSON.parse(localStorage.getItem("sales")) || [];
+    }
+
+    // 売り上げデータをローカルストレージに保存
+    function saveSales(sales) {
+        localStorage.setItem("sales", JSON.stringify(sales));
     }
 
     // 在庫をテーブルに追加
@@ -89,7 +105,46 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // フォームの送信イベントを処理
+    // 売り上げを登録
+    function registerSale(itemName, quantitySold) {
+        const inventory = JSON.parse(localStorage.getItem("inventory")) || [];
+        const itemIndex = inventory.findIndex(item => item.name === itemName);
+
+        if (itemIndex !== -1 && inventory[itemIndex].quantity >= quantitySold) {
+            const sales = loadSales();
+            const sale = {
+                itemName,
+                quantitySold,
+                salePrice: inventory[itemIndex].price * quantitySold,
+                date: new Date().toLocaleString()
+            };
+            sales.push(sale);
+            saveSales(sales);
+
+            // 在庫を減らす
+            inventory[itemIndex].quantity -= quantitySold;
+            saveInventory(inventory);
+
+            // テーブルを再描画
+            inventoryTableBody.innerHTML = "";
+            loadInventory();
+        } else {
+            alert("在庫が不足しています。");
+        }
+    }
+
+    // 売り上げを表示
+    function showSales() {
+        salesList.innerHTML = ""; // 既存の内容をクリア
+        const sales = loadSales();
+        sales.forEach(sale => {
+            const saleDiv = document.createElement("div");
+            saleDiv.textContent = `商品名: ${sale.itemName}, 数量: ${sale.quantitySold}, 売り上げ: ${sale.salePrice}, 日付: ${sale.date}`;
+            salesList.appendChild(saleDiv);
+        });
+    }
+
+    // 在庫フォームの送信イベントを処理
     inventoryForm.addEventListener("submit", function(event) {
         event.preventDefault();
 
@@ -111,6 +166,22 @@ document.addEventListener("DOMContentLoaded", function() {
             reader.readAsDataURL(imageFile);
         }
     });
+
+    // 売り上げフォームの送信イベントを処理
+    salesForm.addEventListener("submit", function(event) {
+        event.preventDefault();
+        
+        const itemName = saleItemNameInput.value;
+        const quantitySold = parseInt(saleQuantityInput.value);
+
+        registerSale(itemName, quantitySold);
+
+        saleItemNameInput.value = "";
+        saleQuantityInput.value = "";
+    });
+
+    // 売り上げ確認ボタンのクリックイベントを処理
+    showSalesButton.addEventListener("click", showSales);
 
     // ページ読み込み時に在庫を表示
     loadInventory();
