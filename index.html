@@ -39,6 +39,22 @@
                 <!-- 在庫項目がここに追加されます -->
             </tbody>
         </table>
+
+        <form id="sales-form">
+            <h2>売り上げ登録</h2>
+            <label for="sale-item-name">商品名:</label>
+            <input type="text" id="sale-item-name" required>
+            
+            <label for="sale-quantity">数量:</label>
+            <input type="number" id="sale-quantity" required>
+            
+            <button type="submit">売り上げ登録</button>
+        </form>
+
+        <button id="show-sales">売り上げ確認</button>
+        <div id="sales-list">
+            <!-- 売り上げがここに表示されます -->
+        </div>
     </div>
     <script src="script.js"></script>
 </body>
